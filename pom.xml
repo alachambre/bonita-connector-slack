@@ -17,12 +17,15 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.build.timestamp.format>yyyy.MM.dd-hh.mm</maven.build.timestamp.format>
 
-        <!-- Connector -->
-        <connector-definition-id>${project.artifactId}</connector-definition-id>
-        <connector-definition-version>1.0</connector-definition-version>
-        <connector-impl-id>${connector-definition-id}-impl</connector-impl-id>
-        <connector-impl-version>${project.version}</connector-impl-version>
-        <connector-main-class>org.bonitasoft.connectors.SlackConnector</connector-main-class>
+        <!-- Send slack message connector -->
+        <send-message-definition-id>send-message</send-message-definition-id>
+        <send-message-definition-version>1.0</send-message-definition-version>
+        <send-message-impl-id>${send-message-definition-id}-impl</send-message-impl-id>
+        <send-message-impl-version>${project.version}</send-message-impl-version>
+        <send-message-main-class>org.bonitasoft.connectors.SlackConnector</send-message-main-class>
+
+        <!-- Connector dependencies -->
+        <bolt.version>1.2.1</bolt.version>
 
         <!-- Bonita -->
         <bonita.engine.version>7.11.0</bonita.engine.version>
@@ -66,7 +69,20 @@
             <artifactId>kotlin-reflect</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
-
+        
+        <!-- Connector -->
+        <dependency>
+            <groupId>com.slack.api</groupId>
+            <artifactId>bolt-jetty</artifactId>
+            <version>${bolt.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        
         <!-- Tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

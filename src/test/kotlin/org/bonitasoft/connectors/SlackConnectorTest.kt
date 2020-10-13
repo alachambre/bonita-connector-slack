@@ -12,47 +12,71 @@ class SlackConnectorTest {
 
     @BeforeEach
     fun setUp() {
-        connector = SlackConnector();
+        connector = SlackConnector()
     }
 
     @Test
     fun `should throw exception if mandatory input is missing`() {
+        val params1 = mapOf(SlackConnector.TOKEN_INPUT to null, SlackConnector.ID_INPUT to "id", SlackConnector.MESSAGE_INPUT to "message")
+        val params2 = mapOf(SlackConnector.TOKEN_INPUT to "token", SlackConnector.ID_INPUT to null, SlackConnector.MESSAGE_INPUT to "message")
+        val params3 = mapOf(SlackConnector.TOKEN_INPUT to "token", SlackConnector.ID_INPUT to "id", SlackConnector.MESSAGE_INPUT to null)
+
+        connector.setInputParameters(params1)
+        assertThatThrownBy { connector.validateInputParameters() }
+                .isExactlyInstanceOf(ConnectorValidationException::class.java)
+        
+        connector.setInputParameters(params2)
+        assertThatThrownBy { connector.validateInputParameters() }
+                .isExactlyInstanceOf(ConnectorValidationException::class.java)
+        
+        connector.setInputParameters(params3)
         assertThatThrownBy { connector.validateInputParameters() }
                 .isExactlyInstanceOf(ConnectorValidationException::class.java)
     }
 
     @Test
     fun `should throw exception if mandatory input is empty`() {
-        // Given
-        connector.setInputParameter(SlackConnector.DEFAULT_INPUT, "")
+        val params1 = mapOf(SlackConnector.TOKEN_INPUT to "", SlackConnector.ID_INPUT to "id", SlackConnector.MESSAGE_INPUT to "message")
+        val params2 = mapOf(SlackConnector.TOKEN_INPUT to "token", SlackConnector.ID_INPUT to "", SlackConnector.MESSAGE_INPUT to "message")
+        val params3 = mapOf(SlackConnector.TOKEN_INPUT to "token", SlackConnector.ID_INPUT to "id", SlackConnector.MESSAGE_INPUT to "")
 
-        // When
+        connector.setInputParameters(params1)
         assertThatThrownBy { connector.validateInputParameters() }
-                // Then
+                .isExactlyInstanceOf(ConnectorValidationException::class.java)
+        
+        connector.setInputParameters(params2)
+        assertThatThrownBy { connector.validateInputParameters() }
+                .isExactlyInstanceOf(ConnectorValidationException::class.java)
+        
+        connector.setInputParameters(params3)
+        assertThatThrownBy { connector.validateInputParameters() }
                 .isExactlyInstanceOf(ConnectorValidationException::class.java)
     }
 
     @Test
     fun `should throw exception if mandatory input is not a string`() {
-        // Given
-        connector.setInputParameter(SlackConnector.DEFAULT_INPUT, 38);
+        val params1 = mapOf(SlackConnector.TOKEN_INPUT to 1, SlackConnector.ID_INPUT to "id", SlackConnector.MESSAGE_INPUT to "message")
+        val params2 = mapOf(SlackConnector.TOKEN_INPUT to "token", SlackConnector.ID_INPUT to 1, SlackConnector.MESSAGE_INPUT to "message")
+        val params3 = mapOf(SlackConnector.TOKEN_INPUT to "token", SlackConnector.ID_INPUT to "id", SlackConnector.MESSAGE_INPUT to 1)
 
-        // When
+        connector.setInputParameters(params1)
         assertThatThrownBy { connector.validateInputParameters() }
-                // Then
+                .isExactlyInstanceOf(ConnectorValidationException::class.java)
+        
+        connector.setInputParameters(params2)
+        assertThatThrownBy { connector.validateInputParameters() }
+                .isExactlyInstanceOf(ConnectorValidationException::class.java)
+        
+        connector.setInputParameters(params3)
+        assertThatThrownBy { connector.validateInputParameters() }
                 .isExactlyInstanceOf(ConnectorValidationException::class.java)
     }
 
     @Test
-    fun `should create output for valid input`() {
-        // Given
-        connector.setInputParameter(SlackConnector.DEFAULT_INPUT, "valid");
+    fun `should validate valid input`() {
+        val params = mapOf(SlackConnector.TOKEN_INPUT to "token", SlackConnector.ID_INPUT to "id", SlackConnector.MESSAGE_INPUT to "message")
 
-        // When
-        connector.executeBusinessLogic();
-
-        // Then
-        val output = connector.getOutputParameter(SlackConnector.DEFAULT_OUTPUT);
-        assertThat(output).isEqualTo("valid - output");
+        connector.setInputParameters(params)
+        connector.validateInputParameters()
     }
 }

@@ -3,26 +3,31 @@ package org.bonitasoft.connectors
 import org.bonitasoft.engine.connector.AbstractConnector
 import org.bonitasoft.engine.connector.ConnectorValidationException
 import java.util.logging.Logger
+import com.slack.api.Slack
+import com.slack.api.methods.MethodsClient
+import com.slack.api.methods.request.chat.ChatPostMessageRequest
+import java.io.IOException
+import com.slack.api.methods.SlackApiException
+import org.bonitasoft.engine.connector.ConnectorException
 
 open class SlackConnector : AbstractConnector {
 
     val logger = Logger.getLogger(SlackConnector::class.java.name)
 
     companion object {
-        const val DEFAULT_INPUT = "defaultInput"
-        const val DEFAULT_OUTPUT = "defaultOutput"
+        const val TOKEN_INPUT = "tokenInput"
+        const val ID_INPUT = "channelIdInput"
+        const val MESSAGE_INPUT = "messageInput"
+        
+        const val TS_OUTPUT = "tsOutput"
     }
 
     constructor() : super()
 
-    /**
-     * Perform validation on the inputs defined on the connector definition (src/main/resources/bonita-connector-slack.def)
-     * You should:
-     * - validate that mandatory inputs are presents
-     * - validate that the content of the inputs is coherent with your use case (e.g: validate that a date is / isn't in the past ...)
-     */
     override fun validateInputParameters() {
-        checkMandatoryStringInput(DEFAULT_INPUT)
+        checkMandatoryStringInput(TOKEN_INPUT)
+        checkMandatoryStringInput(ID_INPUT)
+        checkMandatoryStringInput(MESSAGE_INPUT)
     }
 
     fun checkMandatoryStringInput(inputName: String) {
@@ -42,15 +47,28 @@ open class SlackConnector : AbstractConnector {
         return super.getOutputParameters()[name]
     }
 
-    /**
-     * Core method:
-     * - Execute all the business logic of your connector using the inputs (connect to an external service, compute some values ...).
-     * - Set the output of the connector execution. If outputs are not set, connector fails.
-     */
     public override fun executeBusinessLogic() {
-        val value = getInputParameter(DEFAULT_INPUT)
-        logger.info("Default input: $value")
-        setOutputParameter(DEFAULT_OUTPUT, "$value - output")
+        val client = Slack.getInstance()
+        val token = getInputParameter(TOKEN_INPUT) as String; // We do not want to log the secret token!
+        val channel = getAndLogStringParameter(ID_INPUT);
+        val message = getAndLogStringParameter(MESSAGE_INPUT);
+        val result = client
+            .methods(token)
+            .chatPostMessage { it
+                .channel(channel)
+                .text(message)
+            }
+        if (result.isOk()) {
+            setOutputParameter(TS_OUTPUT, result.getTs())
+        } else {
+            throw ConnectorException("Send slack message failed with the following error: ${result.getError()}")
+        }
+    }
+    
+    public fun getAndLogStringParameter(parameterName : String) : String {
+        val value : String = getInputParameter(parameterName) as String
+        logger.info({ -> "$parameterName: $value"})
+        return value
     }
 
     /**
