@@ -9,6 +9,7 @@ import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import java.io.IOException
 import com.slack.api.methods.SlackApiException
 import org.bonitasoft.engine.connector.ConnectorException
+import com.slack.api.methods.request.chat.ChatPostMessageRequest.ChatPostMessageRequestBuilder
 
 open class SlackConnector : AbstractConnector {
 
@@ -18,7 +19,6 @@ open class SlackConnector : AbstractConnector {
         const val TOKEN_INPUT = "tokenInput"
         const val ID_INPUT = "channelIdInput"
         const val MESSAGE_INPUT = "messageInput"
-        
         const val TS_OUTPUT = "tsOutput"
     }
 
@@ -48,16 +48,12 @@ open class SlackConnector : AbstractConnector {
     }
 
     public override fun executeBusinessLogic() {
-        val client = Slack.getInstance()
+        val client = createSlackClient()
         val token = getInputParameter(TOKEN_INPUT) as String; // We do not want to log the secret token!
-        val channel = getAndLogStringParameter(ID_INPUT);
-        val message = getAndLogStringParameter(MESSAGE_INPUT);
+        val request = createPostMessageRequest()
         val result = client
             .methods(token)
-            .chatPostMessage { it
-                .channel(channel)
-                .text(message)
-            }
+            .chatPostMessage(request)
         if (result.isOk()) {
             setOutputParameter(TS_OUTPUT, result.getTs())
         } else {
@@ -65,19 +61,22 @@ open class SlackConnector : AbstractConnector {
         }
     }
     
+    fun createPostMessageRequest() : ChatPostMessageRequest {
+        val channel = getAndLogStringParameter(ID_INPUT);
+        val message = getAndLogStringParameter(MESSAGE_INPUT);
+        return ChatPostMessageRequest.builder()
+                .channel(channel)
+                .text(message)
+                .build()
+    }
+    
+    fun createSlackClient() : Slack {
+        return Slack.getInstance()
+    }
+    
     public fun getAndLogStringParameter(parameterName : String) : String {
         val value : String = getInputParameter(parameterName) as String
         logger.info({ -> "$parameterName: $value"})
         return value
     }
-
-    /**
-     * [Optional] Open a connection to remote server
-     */
-    override fun connect() {}
-
-    /**
-     * [Optional] Close connection to remote server
-     */
-    override fun disconnect() {}
 }
